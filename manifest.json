@@ -1,14 +1,19 @@
 {
-  "name": "스스로 옷 입기 도우미",
-  "short_name": "옷 입기 도우미",
-  "start_url": "index.html",
+  "name": "옷입기도우미",
+  "short_name": "옷입기",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#4CAF50",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "intro.png",
       "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "intro.png",
+      "sizes": "512x512",
       "type": "image/png"
     }
   ]
