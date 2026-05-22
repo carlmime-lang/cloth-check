@@ -53,7 +53,7 @@
             from { opacity: 0; } to { opacity: 1; }
         }
 
-        /* 웹캠 거울 모드 CSS 설정 */
+        /* [수정] 중복 반전을 막기 위해 CSS 반전은 none으로 제거합니다 */
         #webcam-container {
             position: relative;
             display: inline-block;
@@ -66,8 +66,8 @@
         }
         #webcam-container canvas {
             display: block;
-            transform: rotateY(180deg);
-            -webkit-transform: rotateY(180deg);
+            transform: none; 
+            -webkit-transform: none;
             max-width: 100%;
             height: auto;
         }
@@ -99,7 +99,7 @@
 
         .pop { animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes pop {
-            0% { transform: scale(0.6); } 100% { transform: scale(1); }
+            0 { transform: scale(0.6); } 100% { transform: scale(1); }
         }
     </style>
 </head>
@@ -164,7 +164,6 @@
             }
         }
 
-        // [오프닝 처리] 자동 음성을 제거하고 첫 화면 진입을 매끄럽게 수정
         window.addEventListener('load', () => {
             setTimeout(() => {
                 const splash = document.getElementById('splash-screen');
@@ -175,7 +174,6 @@
             }, 3000);
         });
 
-        // [인공지능 및 카메라 초기화] 사용자가 버튼을 눌렀을 때 작동하므로 권한 차단을 회피함
         async function init() {
             try {
                 const modelURL = MODEL_URL + "model.json";
@@ -184,7 +182,7 @@
                 document.getElementById("resultText").innerText = "AI 모델 로딩 중...";
                 model = await tmImage.load(modelURL, metadataURL);
                 
-                // 거울 모드 true 설정
+                // [중요] 스마트폰 자체 셀카 모드 전용 라이브러리 거울 처리
                 webcam = new tmImage.Webcam(500, 500, true); 
                 await webcam.setup();
                 await webcam.play();
