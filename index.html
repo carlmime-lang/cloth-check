@@ -53,7 +53,7 @@
             from { opacity: 0; } to { opacity: 1; }
         }
 
-        /* [핵심] 웹캠 거울 모드 CSS 좌우 반전 설정 */
+        /* 웹캠 거울 모드 설정 */
         #webcam-container {
             position: relative;
             display: inline-block;
@@ -109,6 +109,7 @@
 </head>
 <body>
 
+    <!-- [오프닝 화면] -->
     <div id="splash-screen">
         <img src="intro2.png" alt="제59회 충청남도교육자료전">
     </div>
@@ -117,6 +118,7 @@
         <h1>👕 스스로 옷 입기 도우미</h1>
     </header>
 
+    <!-- [메인 홈 화면] -->
     <div id="home" class="screen active">
         <div class="btn-group">
             <button class="btn-student" onclick="showPage('student')">👦 학생용 (옷 확인하기)</button>
@@ -124,6 +126,7 @@
         </div>
     </div>
 
+    <!-- [학생용 화면] -->
     <div id="student" class="screen">
         <div id="webcam-container">
             <div class="guide-overlay"></div>
@@ -136,6 +139,7 @@
         <button class="btn-back" onclick="location.reload()">처음으로 돌아가기</button>
     </div>
 
+    <!-- [교사용 화면] -->
     <div id="teacher" class="screen">
         <div style="padding: 20px; background: #fff; border-radius: 15px; margin: 10px;">
             <h3>새로운 옷 학습시키기</h3>
@@ -145,15 +149,16 @@
         <button class="btn-back" onclick="showPage('home')">뒤로가기</button>
     </div>
 
+    <!-- 외부 라이브러리 (Tensorflow & TM) -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 
     <script>
-        // 학습시킨 티쳐블 머신 주소
+        // 학습시킨 티쳐블 머신 주소 (수정 필요 시 여기만 바꾸세요)
         const MODEL_URL = "https://teachablemachine.withgoogle.com/models/WMkucO1Ey/";
 
         let model, webcam, stableState = "", lastState = "", count = 0;
-        const THRESHOLD = 7; // 연속 감지 횟수 기준
+        const THRESHOLD = 7; // 연속으로 몇 번 감지되어야 확정할지
 
         // [음성 출력 함수]
         function speak(text) {
@@ -190,8 +195,7 @@
             document.getElementById("resultText").innerText = "AI 모델 로딩 중...";
             model = await tmImage.load(modelURL, metadataURL);
             
-            // [핵심] 자바스크립트 웹캠을 거울 모드(true)로 설정
-            webcam = new tmImage.Webcam(500, 500, true); 
+            webcam = new tmImage.Webcam(500, 500, true); // (가로, 세로, 거울모드사용)
             await webcam.setup();
             await webcam.play();
             
@@ -244,15 +248,15 @@
                 
                 // 성공 진동: 짧게 한 번
                 if ("vibrate" in navigator) navigator.vibrate(100);
-                speak("바르게 입었습니다.");
+                speak("바르게 입었습니다. 멋져요!");
             } else if (state === "bad") {
                 document.body.style.background = "var(--error-bg)";
                 emojiEl.innerText = "❌";
                 textEl.innerText = "앞뒤가 바뀐 것 같아요";
                 
-                // 실패 진동: 두 번
+                // 실패 진동: 징-징- 두 번
                 if ("vibrate" in navigator) navigator.vibrate([200, 100, 200]);
-                speak("옷이 뒤집어진 것 같아요.");
+                speak("옷이 뒤집어진 것 같아요. 다시 확인해보세요.");
             }
             emojiEl.classList.add("pop");
             lastState = state;
