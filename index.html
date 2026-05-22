@@ -53,7 +53,7 @@
             from { opacity: 0; } to { opacity: 1; }
         }
 
-        /* 웹캠 설정: 거울 모드 제거 (transform: none) */
+        /* [핵심] 웹캠 거울 모드 CSS 좌우 반전 설정 */
         #webcam-container {
             position: relative;
             display: inline-block;
@@ -66,12 +66,13 @@
         }
         #webcam-container canvas {
             display: block;
-            transform: none; 
-            -webkit-transform: none;
+            transform: rotateY(180deg);
+            -webkit-transform: rotateY(180deg);
             max-width: 100%;
             height: auto;
         }
 
+        /* 가이드라인 (사각형) */
         .guide-overlay {
             position: absolute;
             top: 50%; left: 50%;
@@ -82,10 +83,12 @@
             pointer-events: none;
         }
 
+        /* 결과 표시창 */
         #result-area { margin-top: 15px; min-height: 180px; }
         #emoji { font-size: 90px; display: block; }
         #resultText { font-size: 28px; font-weight: bold; margin-top: 10px; }
 
+        /* 버튼 디자인 */
         .btn-group { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-top: 40px; }
         button {
             font-size: 20px; padding: 18px; border: none; border-radius: 12px;
@@ -97,6 +100,7 @@
         .btn-teacher { background: #607D8B; color: white; }
         .btn-back { background: #9e9e9e; color: white; margin-top: 25px; }
 
+        /* 애니메이션 효과 */
         .pop { animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes pop {
             0% { transform: scale(0.6); } 100% { transform: scale(1); }
@@ -105,16 +109,14 @@
 </head>
 <body>
 
-    <!-- [오프닝 화면] -->
     <div id="splash-screen">
-        <img src="intro2.png" alt="제59회 충청남도교육자료전">
+        <img src="intro.png" alt="제59회 충청남도교육자료전">
     </div>
 
     <header>
         <h1>👕 스스로 옷 입기 도우미</h1>
     </header>
 
-    <!-- [메인 홈 화면] -->
     <div id="home" class="screen active">
         <div class="btn-group">
             <button class="btn-student" onclick="showPage('student')">👦 학생용 (옷 확인하기)</button>
@@ -122,7 +124,6 @@
         </div>
     </div>
 
-    <!-- [학생용 화면] -->
     <div id="student" class="screen">
         <div id="webcam-container">
             <div class="guide-overlay"></div>
@@ -135,7 +136,6 @@
         <button class="btn-back" onclick="location.reload()">처음으로 돌아가기</button>
     </div>
 
-    <!-- [교사용 화면] -->
     <div id="teacher" class="screen">
         <div style="padding: 20px; background: #fff; border-radius: 15px; margin: 10px;">
             <h3>새로운 옷 학습시키기</h3>
@@ -149,10 +149,13 @@
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 
     <script>
+        // 학습시킨 티쳐블 머신 주소
         const MODEL_URL = "https://teachablemachine.withgoogle.com/models/WMkucO1Ey/";
-        let model, webcam, stableState = "", lastState = "", count = 0;
-        const THRESHOLD = 7;
 
+        let model, webcam, stableState = "", lastState = "", count = 0;
+        const THRESHOLD = 7; // 연속 감지 횟수 기준
+
+        // [음성 출력 함수]
         function speak(text) {
             window.speechSynthesis.cancel();
             const msg = new SpeechSynthesisUtterance(text);
@@ -160,12 +163,14 @@
             window.speechSynthesis.speak(msg);
         }
 
+        // [화면 전환 함수]
         function showPage(pageId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(pageId).classList.add('active');
             if(pageId === 'student') init();
         }
 
+        // [오프닝 처리]
         window.addEventListener('load', () => {
             setTimeout(() => {
                 const splash = document.getElementById('splash-screen');
@@ -174,9 +179,10 @@
                     splash.style.display = 'none';
                     speak("안녕하세요! 옷 입기 도우미입니다.");
                 }, 800);
-            }, 3000);
+            }, 3000); // 3초간 인트로 노출
         });
 
+        // [인공지능 초기화]
         async function init() {
             const modelURL = MODEL_URL + "model.json";
             const metadataURL = MODEL_URL + "metadata.json";
@@ -184,8 +190,8 @@
             document.getElementById("resultText").innerText = "AI 모델 로딩 중...";
             model = await tmImage.load(modelURL, metadataURL);
             
-            // 거울 모드 false 설정
-            webcam = new tmImage.Webcam(500, 500, false); 
+            // [핵심] 자바스크립트 웹캠을 거울 모드(true)로 설정
+            webcam = new tmImage.Webcam(500, 500, true); 
             await webcam.setup();
             await webcam.play();
             
@@ -222,24 +228,29 @@
             }
         }
 
+        // [결과 업데이트 및 진동/음성 알림]
         function updateResult(state) {
             if (lastState === state) return;
             const emojiEl = document.getElementById("emoji");
             const textEl = document.getElementById("resultText");
             
             emojiEl.classList.remove("pop");
-            void emojiEl.offsetWidth;
+            void emojiEl.offsetWidth; // 애니메이션 리셋
 
             if (state === "good") {
                 document.body.style.background = "var(--success-bg)";
                 emojiEl.innerText = "👍";
                 textEl.innerText = "바르게 잘 입었어요!";
+                
+                // 성공 진동: 짧게 한 번
                 if ("vibrate" in navigator) navigator.vibrate(100);
                 speak("바르게 입었습니다.");
             } else if (state === "bad") {
                 document.body.style.background = "var(--error-bg)";
                 emojiEl.innerText = "❌";
                 textEl.innerText = "앞뒤가 바뀐 것 같아요";
+                
+                // 실패 진동: 두 번
                 if ("vibrate" in navigator) navigator.vibrate([200, 100, 200]);
                 speak("옷이 뒤집어진 것 같아요.");
             }
