@@ -3,42 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>거울보고 옷 입기 도우미</title>
+    <title>스스로 옷 입기 도우미</title>
     <style>
         :root {
             --success-bg: #d4edda;
             --error-bg: #f8d7da;
             --normal-bg: #f0f2f5;
+            --primary-color: #4CAF50;
         }
 
         body {
             font-family: 'Pretendard', sans-serif;
             text-align: center;
             margin: 0;
-            padding-bottom: 50px;
-            transition: background 0.4s ease;
+            overflow-x: hidden;
             background-color: var(--normal-bg);
+            transition: background 0.4s ease;
+        }
+
+        /* 1. 오프닝(로딩) 화면 */
+        #splash-screen {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: #ffffff;
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.8s ease;
+        }
+        #splash-screen img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         header {
             padding: 20px;
             background: #fff;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
         }
 
-        /* 웹캠 컨테이너 (거울 모드) */
+        /* 2. 메인 컨텐츠 영역 */
+        .screen { display: none; padding: 20px; animation: fadeIn 0.5s; }
+        .active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; } to { opacity: 1; }
+        }
+
+        /* 웹캠 거울 모드 설정 */
         #webcam-container {
             position: relative;
             display: inline-block;
-            margin: 0 auto;
-            border-radius: 30px;
+            margin: 20px auto;
+            border-radius: 25px;
             overflow: hidden;
-            border: 8px solid #fff;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border: 6px solid #fff;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
             background: #000;
         }
-
         #webcam-container canvas {
             display: block;
             transform: rotateY(180deg);
@@ -47,64 +72,61 @@
             height: auto;
         }
 
+        /* 가이드라인 (사각형) */
         .guide-overlay {
             position: absolute;
-            top: 50%;
-            left: 50%;
+            top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            width: 70%;
-            height: 75%;
-            border: 4px dashed rgba(255, 255, 255, 0.6);
-            border-radius: 20px;
+            width: 70%; height: 70%;
+            border: 4px dashed rgba(255, 255, 255, 0.5);
+            border-radius: 15px;
             pointer-events: none;
         }
 
-        #result-area { margin-top: 20px; min-height: 200px; }
-        #emoji { font-size: 100px; display: block; }
-        #resultText { font-size: 35px; font-weight: bold; }
+        /* 결과 표시창 */
+        #result-area { margin-top: 15px; min-height: 180px; }
+        #emoji { font-size: 90px; display: block; }
+        #resultText { font-size: 28px; font-weight: bold; margin-top: 10px; }
 
-        /* 버튼 스타일들 */
-        .btn-group { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-top: 30px; }
-        button { font-size: 22px; padding: 20px; border: none; border-radius: 15px; cursor: pointer; width: 85%; font-weight: bold; }
-        
-        .btn-student { background: #4CAF50; color: white; }
-        .btn-teacher { background: #607D8B; color: white; }
-        .btn-back { background: #9e9e9e; color: white; margin-top: 20px; }
-
-        .screen { display: none; padding: 20px; }
-        .active { display: block; }
-
-        @keyframes pop {
-            0% { transform: scale(0.5); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
+        /* 버튼 디자인 */
+        .btn-group { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-top: 40px; }
+        button {
+            font-size: 20px; padding: 18px; border: none; border-radius: 12px;
+            cursor: pointer; width: 85%; font-weight: bold; transition: transform 0.1s;
         }
-        .pop { animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        button:active { transform: scale(0.98); }
+        
+        .btn-student { background: var(--primary-color); color: white; }
+        .btn-teacher { background: #607D8B; color: white; }
+        .btn-back { background: #9e9e9e; color: white; margin-top: 25px; }
+
+        /* 애니메이션 효과 */
+        .pop { animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes pop {
+            0% { transform: scale(0.6); } 100% { transform: scale(1); }
+        }
     </style>
 </head>
 <body>
+
+    <!-- [오프닝 화면] -->
+    <div id="splash-screen">
+        <img src="intro.png" alt="제59회 충청남도교육자료전">
+    </div>
 
     <header>
         <h1>👕 스스로 옷 입기 도우미</h1>
     </header>
 
-    <!-- 홈 화면 (여기서 버튼 선택) -->
+    <!-- [메인 홈 화면] -->
     <div id="home" class="screen active">
         <div class="btn-group">
-            <button class="btn-teacher" onclick="showPage('teacher')">👩‍🏫 교사용 (옷 등록)</button>
-            <button class="btn-student" onclick="showPage('student')">👦 학생용 (옷 확인)</button>
+            <button class="btn-student" onclick="showPage('student')">👦 학생용 (옷 확인하기)</button>
+            <button class="btn-teacher" onclick="showPage('teacher')">👩‍🏫 교사용 (모델 등록)</button>
         </div>
     </div>
 
-    <!-- 교사용 화면 -->
-    <div id="teacher" class="screen">
-        <h2>새로운 옷을 등록하시겠습니까?</h2>
-        <p>등록 후 모델 주소를 업데이트해야 합니다.</p>
-        <button class="btn-teacher" onclick="openTrain()">Teachable Machine 열기</button>
-        <br>
-        <button class="btn-back" onclick="showPage('home')">뒤로가기</button>
-    </div>
-
-    <!-- 학생용 화면 -->
+    <!-- [학생용 화면] -->
     <div id="student" class="screen">
         <div id="webcam-container">
             <div class="guide-overlay"></div>
@@ -112,21 +134,33 @@
         </div>
         <div id="result-area">
             <span id="emoji">🙂</span>
-            <div id="resultText">준비 중...</div>
+            <div id="resultText">카메라를 비춰주세요</div>
         </div>
-        <button class="btn-back" onclick="location.reload()">처음으로</button>
+        <button class="btn-back" onclick="location.reload()">처음으로 돌아가기</button>
     </div>
 
+    <!-- [교사용 화면] -->
+    <div id="teacher" class="screen">
+        <div style="padding: 20px; background: #fff; border-radius: 15px; margin: 10px;">
+            <h3>새로운 옷 학습시키기</h3>
+            <p>Teachable Machine 페이지로 이동하여<br>모델을 최신화할 수 있습니다.</p>
+            <button class="btn-teacher" onclick="window.open('https://teachablemachine.withgoogle.com/train/image', '_blank')">학습 페이지 열기</button>
+        </div>
+        <button class="btn-back" onclick="showPage('home')">뒤로가기</button>
+    </div>
+
+    <!-- 외부 라이브러리 (Tensorflow & TM) -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 
     <script>
+        // 학습시킨 티쳐블 머신 주소 (수정 필요 시 여기만 바꾸세요)
         const MODEL_URL = "https://teachablemachine.withgoogle.com/models/WMkucO1Ey/";
-        const TRAIN_URL = "https://teachablemachine.withgoogle.com/train/image/1GgdkPW2342neXZijD8jNARBOZStCcQ2P";
 
         let model, webcam, stableState = "", lastState = "", count = 0;
-        const THRESHOLD = 8;
+        const THRESHOLD = 7; // 연속으로 몇 번 감지되어야 확정할지
 
+        // [음성 출력 함수]
         function speak(text) {
             window.speechSynthesis.cancel();
             const msg = new SpeechSynthesisUtterance(text);
@@ -134,28 +168,41 @@
             window.speechSynthesis.speak(msg);
         }
 
+        // [화면 전환 함수]
         function showPage(pageId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(pageId).classList.add('active');
             if(pageId === 'student') init();
         }
 
-        function openTrain() {
-            window.open(TRAIN_URL, '_blank');
-        }
+        // [오프닝 처리]
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const splash = document.getElementById('splash-screen');
+                splash.style.opacity = '0';
+                setTimeout(() => {
+                    splash.style.display = 'none';
+                    speak("안녕하세요! 옷 입기 도우미입니다.");
+                }, 800);
+            }, 3000); // 3초간 인트로 노출
+        });
 
+        // [인공지능 초기화]
         async function init() {
             const modelURL = MODEL_URL + "model.json";
             const metadataURL = MODEL_URL + "metadata.json";
+            
+            document.getElementById("resultText").innerText = "AI 모델 로딩 중...";
             model = await tmImage.load(modelURL, metadataURL);
             
-            webcam = new tmImage.Webcam(500, 500, true); 
+            webcam = new tmImage.Webcam(500, 500, true); // (가로, 세로, 거울모드사용)
             await webcam.setup();
             await webcam.play();
             
             document.getElementById("webcam-viewer").innerHTML = "";
             document.getElementById("webcam-viewer").appendChild(webcam.canvas);
-            speak("확인을 시작합니다. 사각형 안에 옷을 보여주세요.");
+            
+            speak("준비되었습니다. 사각형 안에 옷을 보여주세요.");
             window.requestAnimationFrame(loop);
         }
 
@@ -170,8 +217,8 @@
             let best = prediction.reduce((prev, curr) => (prev.probability > curr.probability) ? prev : curr);
 
             let currentState = "none";
-            if (best.className === "앞" && best.probability > 0.8) currentState = "good";
-            if (best.className === "뒤" && best.probability > 0.8) currentState = "bad";
+            if (best.className === "앞" && best.probability > 0.85) currentState = "good";
+            if (best.className === "뒤" && best.probability > 0.85) currentState = "bad";
 
             if (currentState === stableState && currentState !== "none") {
                 count++;
@@ -185,24 +232,31 @@
             }
         }
 
+        // [결과 업데이트 및 진동/음성 알림]
         function updateResult(state) {
             if (lastState === state) return;
             const emojiEl = document.getElementById("emoji");
             const textEl = document.getElementById("resultText");
             
             emojiEl.classList.remove("pop");
-            void emojiEl.offsetWidth; 
+            void emojiEl.offsetWidth; // 애니메이션 리셋
 
             if (state === "good") {
                 document.body.style.background = "var(--success-bg)";
                 emojiEl.innerText = "👍";
                 textEl.innerText = "바르게 잘 입었어요!";
-                speak("바르게 입었습니다. 최고예요!");
+                
+                // 성공 진동: 짧게 한 번
+                if ("vibrate" in navigator) navigator.vibrate(100);
+                speak("바르게 입었습니다. 멋져요!");
             } else if (state === "bad") {
                 document.body.style.background = "var(--error-bg)";
                 emojiEl.innerText = "❌";
                 textEl.innerText = "앞뒤가 바뀐 것 같아요";
-                speak("뒤집어 입은 것 같아요. 다시 확인해볼까요?");
+                
+                // 실패 진동: 징-징- 두 번
+                if ("vibrate" in navigator) navigator.vibrate([200, 100, 200]);
+                speak("옷이 뒤집어진 것 같아요. 다시 확인해보세요.");
             }
             emojiEl.classList.add("pop");
             lastState = state;
