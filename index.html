@@ -40,12 +40,12 @@
         .btn-back { background: #9e9e9e; color: white; margin-top: 25px; }
 
         .pop { animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        @keyframes pop { 0 { transform: scale(0.6); } 100% { transform: scale(1); } }
+        @keyframes pop { 0% { transform: scale(0.6); } 100% { transform: scale(1); } }
     </style>
 </head>
 <body>
 
-    <div id="splash-screen"><img src="intro2.png" alt="로딩중"></div>
+    <div id="splash-screen"><img src="intro.png" alt="로딩중"></div>
 
     <header><h1>👕 스스로 옷 입기 도우미</h1></header>
 
@@ -80,6 +80,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 
     <script>
+        // 새로운 모델 주소 적용 완료
         const MODEL_URL = "https://teachablemachine.withgoogle.com/models/WMkucO1Ey/";
         let model, webcam, stableState = "", lastState = "", count = 0;
         const THRESHOLD = 7;
