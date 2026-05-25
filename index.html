@@ -24,7 +24,6 @@
         .active { display: block; }
         
         #webcam-container { position: relative; display: inline-block; margin: 20px auto; border-radius: 25px; overflow: hidden; border: 6px solid #fff; box-shadow: 0 8px 25px rgba(0,0,0,0.15); background: #000; }
-        /* 거울 모드 설정을 위해 transform 적용 */
         #webcam-container canvas { display: block; transform: scaleX(-1); -webkit-transform: scaleX(-1); max-width: 100%; }
         
         .guide-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 70%; height: 70%; border: 4px dashed rgba(255, 255, 255, 0.5); border-radius: 15px; pointer-events: none; }
@@ -82,7 +81,6 @@
 
         async function init() {
             model = await tmImage.load(MODEL_URL + "model.json", MODEL_URL + "metadata.json");
-            // [수정 완료] 거울 모드 true 설정
             webcam = new tmImage.Webcam(500, 500, true); 
             await webcam.setup(); await webcam.play();
             document.getElementById("webcam-viewer").innerHTML = "";
@@ -96,7 +94,9 @@
             const pred = await model.predict(webcam.canvas);
             let best = pred.reduce((p, c) => (p.probability > c.probability) ? p : c);
             
-            let currentState = best.probability > PROBABILITY_LIMIT ? (best.className === "앞" ? "good" : "bad") : "none";
+            // [2번 핵심 수정] 인식 결과 매핑을 반대로 뒤집음
+            // 티처블이 "뒤"라고 인식하면 앱에서는 바르게 입은 것(good)으로, "앞"이라고 인식하면 뒤집힌 것(bad)으로 판단합니다.
+            let currentState = best.probability > PROBABILITY_LIMIT ? (best.className === "뒤" ? "good" : "bad") : "none";
             
             if (currentState === stableState && currentState !== "none") count++;
             else { stableState = currentState; count = 0; }
