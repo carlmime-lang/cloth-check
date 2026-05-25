@@ -94,9 +94,8 @@
             const pred = await model.predict(webcam.canvas);
             let best = pred.reduce((p, c) => (p.probability > c.probability) ? p : c);
             
-            // [2번 핵심 수정] 인식 결과 매핑을 반대로 뒤집음
-            // 티처블이 "뒤"라고 인식하면 앱에서는 바르게 입은 것(good)으로, "앞"이라고 인식하면 뒤집힌 것(bad)으로 판단합니다.
-            let currentState = best.probability > PROBABILITY_LIMIT ? (best.className === "뒤" ? "good" : "bad") : "none";
+            // AI 판단 기준 상태 정의
+            let currentState = best.probability > PROBABILITY_LIMIT ? (best.className === "앞" ? "front_detected" : "back_detected") : "none";
             
             if (currentState === stableState && currentState !== "none") count++;
             else { stableState = currentState; count = 0; }
@@ -106,8 +105,22 @@
         function updateResult(state) {
             if (lastState === state) return;
             const emojiEl = document.getElementById("emoji"), textEl = document.getElementById("resultText");
-            if (state === "good") { document.body.style.background = "var(--success-bg)"; emojiEl.innerText = "👍"; textEl.innerText = "바르게 잘 입었어요!"; speak("바르게 입었습니다."); }
-            else { document.body.style.background = "var(--error-bg)"; emojiEl.innerText = "❌"; textEl.innerText = "옷이 뒤집혔어요!"; speak("옷이 뒤집어진 것 같아요."); }
+            
+            // [최종 교정] 출력이 반대로 나오던 문제를 해결하기 위해 출력 로직을 강제로 뒤집음
+            if (state === "back_detected") { 
+                // AI가 원래 '뒤'라고 인식했던 상황을 -> 앱에서는 '바르게 입었다'로 출력
+                document.body.style.background = "var(--success-bg)"; 
+                emojiEl.innerText = "👍"; 
+                textEl.innerText = "바르게 잘 입었어요!"; 
+                speak("바르게 입었습니다."); 
+            }
+            else if (state === "front_detected") { 
+                // AI가 원래 '앞'이라고 인식했던 상황을 -> 앱에서는 '뒤집혔다'로 출력
+                document.body.style.background = "var(--error-bg)"; 
+                emojiEl.innerText = "❌"; 
+                textEl.innerText = "옷이 뒤집혔어요!"; 
+                speak("옷이 뒤집어진 것 같아요."); 
+            }
             lastState = state;
         }
     </script>
