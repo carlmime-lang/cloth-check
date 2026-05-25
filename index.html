@@ -24,8 +24,15 @@
         .active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
+        /* [핵심 수정] 웹캠 화면을 CSS로 좌우 반전(거울 모드) 처리합니다 */
         #webcam-container { position: relative; display: inline-block; margin: 20px auto; border-radius: 25px; overflow: hidden; border: 6px solid #fff; box-shadow: 0 8px 25px rgba(0,0,0,0.15); background: #000; }
-        #webcam-container canvas { display: block; transform: none; -webkit-transform: none; max-width: 100%; height: auto; }
+        #webcam-container canvas { 
+            display: block; 
+            transform: scaleX(-1); /* 가로 방향으로 뒤집기 (거울 효과) */
+            -webkit-transform: scaleX(-1); /* 사파리/크롬 구버전 호환 */
+            max-width: 100%; 
+            height: auto; 
+        }
 
         .guide-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 70%; height: 70%; border: 4px dashed rgba(255, 255, 255, 0.5); border-radius: 15px; pointer-events: none; }
         #result-area { margin-top: 15px; min-height: 180px; }
@@ -45,7 +52,7 @@
 </head>
 <body>
 
-    <div id="splash-screen"><img src="intro.png" alt="로딩중"></div>
+    <div id="splash-screen"><img src="intro2.png" alt="로딩중"></div>
 
     <header><h1>👕 스스로 옷 입기 도우미</h1></header>
 
@@ -80,10 +87,10 @@
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 
     <script>
-        // 새로운 모델 주소 적용 완료
+        // 최신 학습 모델 주소
         const MODEL_URL = "https://teachablemachine.withgoogle.com/models/WMkucO1Ey/";
         let model, webcam, stableState = "", lastState = "", count = 0;
-        const THRESHOLD = 7;
+        const THRESHOLD = 7; // 연속 감지 횟수 기준
 
         function speak(text) { window.speechSynthesis.cancel(); const msg = new SpeechSynthesisUtterance(text); msg.lang = 'ko-KR'; window.speechSynthesis.speak(msg); }
         function showPage(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); if(id === 'student') init(); }
@@ -92,17 +99,34 @@
 
         async function init() {
             try {
-                model = await tmImage.load(MODEL_URL + "model.json", MODEL_URL + "metadata.json");
+                const modelURL = MODEL_URL + "model.json";
+                const metadataURL = MODEL_URL + "metadata.json";
+                
+                document.getElementById("resultText").innerText = "AI 모델 로딩 중...";
+                model = await tmImage.load(modelURL, metadataURL);
+                
+                // [핵심 수정] 자바스크립트 웹캠을 거울 모드(true)로 설정
                 webcam = new tmImage.Webcam(500, 500, true); 
-                await webcam.setup(); await webcam.play();
+                await webcam.setup();
+                await webcam.play();
+                
                 document.getElementById("webcam-viewer").innerHTML = "";
                 document.getElementById("webcam-viewer").appendChild(webcam.canvas);
+                
                 speak("준비되었습니다. 사각형 안에 옷을 보여주세요.");
                 window.requestAnimationFrame(loop);
-            } catch (e) { alert("카메라 권한을 허용해주세요."); }
+            } catch (e) {
+                console.error(e);
+                alert("카메라 권한을 허용해주세요.");
+                document.getElementById("resultText").innerText = "카메라 오류 발생";
+            }
         }
 
-        async function loop() { webcam.update(); await predict(); window.requestAnimationFrame(loop); }
+        async function loop() {
+            webcam.update();
+            await predict();
+            window.requestAnimationFrame(loop);
+        }
 
         async function predict() {
             const pred = await model.predict(webcam.canvas);
@@ -117,9 +141,23 @@
             if (lastState === state) return;
             const emojiEl = document.getElementById("emoji"), textEl = document.getElementById("resultText");
             emojiEl.classList.remove("pop"); void emojiEl.offsetWidth;
-            if (state === "good") { document.body.style.background = "var(--success-bg)"; emojiEl.innerText = "👍"; textEl.innerText = "바르게 잘 입었어요!"; speak("바르게 입었습니다."); }
-            else { document.body.style.background = "var(--error-bg)"; emojiEl.innerText = "❌"; textEl.innerText = "옷이 뒤집혔어요!"; speak("옷이 뒤집어진 것 같아요."); }
-            emojiEl.classList.add("pop"); lastState = state;
+            if (state === "good") {
+                document.body.style.background = "var(--success-bg)";
+                emojiEl.innerText = "👍";
+                textEl.innerText = "바르게 잘 입었어요!";
+                // 짧은 진동 추가
+                if ("vibrate" in navigator) navigator.vibrate(100);
+                speak("바르게 입었습니다.");
+            } else {
+                document.body.style.background = "var(--error-bg)";
+                emojiEl.innerText = "❌";
+                textEl.innerText = "앞뒤가 바뀐 것 같아요";
+                // 짧게 세 번 진동 추가
+                if ("vibrate" in navigator) navigator.vibrate([200, 100, 200]);
+                speak("옷이 뒤집어진 것 같아요.");
+            }
+            emojiEl.classList.add("pop");
+            lastState = state;
         }
     </script>
 </body>
